@@ -1,0 +1,89 @@
+name: Core
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - '**'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Default init
+        uses: ./
+        with:
+          key: foo
+
+      - name: Path init
+        uses: ./
+        with:
+          key: bar
+          path: here
+
+      - name: Test default path
+        shell: bash
+        run: |
+          if [ "$(cat ~/.ssh/id_rsa)" != "foo" ]; then
+            exit 1
+          fi
+
+      - name: Test custom path
+        shell: bash
+        run: |
+          if [ "$(cat here)" != "bar" ]; then
+            exit 1
+          fi
+
+  release:
+    name: Changelog & Release
+    runs-on: ubuntu-latest
+    needs:
+      - test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Parse
+        id: parse
+        uses: alorel-actions/semantic-release-lite@v0
+        with:
+          minor-types: |
+            feat: Features
+          patch-types: |
+            fix: Bug Fixes
+            deps: Dependency updates
+            perf: Performance
+          trivial-types: |
+            chore: Maintenance
+            ci: CI & Build
+            build: CI & Build
+            refactor: Refactors
+            docs: Documentation
+
+      - name: Release
+        uses: ./.github/actions/release
+        if: ${{ steps.parse.outputs.should-release && github.ref == 'refs/heads/master' }}
+        with:
+          major: ${{ steps.parse.outputs.next-version-major }}
+          minor: ${{ steps.parse.outputs.next-version-minor }}
+          patch: ${{ steps.parse.outputs.next-version-patch }}
+          changelog: ${{ steps.parse.outputs.changelog }}
+          issues-closed: ${{ steps.parse.outputs.issues-closed }}
