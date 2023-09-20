@@ -1,0 +1,12 @@
+name: Init SSH
+description: Initialises your SSH identity in `~/.ssh/id_rsa`. Works on Windows and Penguins/Fruits.
+inputs:
+  key:
+    required: true
+    description: SSH private key
+  path:
+    description: Path to write to. Defaults to `~/.ssh/id_rsa`
+runs:
+  using: node20
+  main: index.js
+  post: cleanup.js
