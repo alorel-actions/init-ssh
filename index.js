@@ -15,7 +15,7 @@ try {
     mkdirSync(dirname(location), {recursive: true});
   }
 
-  writeFileSync(location, key, {mode: 0o600});
+  writeFileSync(location, `${key}\n`, {mode: 0o600});
   info(`Wrote ${location}`);
   saveState('path', location);
 } catch (e) {
