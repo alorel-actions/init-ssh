@@ -1,10 +1,14 @@
 const {getInput, setFailed, saveState, info} = require("@actions/core");
 const {dirname, join} = require('node:path');
 const {existsSync, mkdirSync, writeFileSync} = require('node:fs');
+const {homedir} = require('node:os');
 
 try {
   const key = getInput('key', {required: true});
-  const location = getInput('path') || join(require('node:os').homedir(), '.ssh', 'id_rsa');
+  let location = getInput('path');
+  location = location
+    ? location.replace(/^~(?=$|\/|\\)/, homedir())
+    : join(homedir(), '.ssh', 'id_rsa');
 
   const sshDir = dirname(location);
   if (!existsSync(sshDir)) {
